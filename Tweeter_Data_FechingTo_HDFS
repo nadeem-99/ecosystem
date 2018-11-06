@@ -1,0 +1,62 @@
+                                            GETTING TWEETS ON HDFS using APACHE FLUME 
+
+apps.twitter.com
+
+https://apps.twitter.com
+
+Generate keys
+
+jps
+
+wget http://archive.apache.org/dist/flume/1.4.0/apache-flume-1.4.0-bin.tar.gz
+
+tar -zxvf apache-flume-1.4.0-bin.tar.gz
+
+wget http://files.cloudera.com/samples/flume-sources-1.0-SNAPSHOT.jar
+wget https://s3-ap-southeast-2.amazonaws.com/datasetz/flume-sources-1.0-SNAPSHOT.jar
+mv flume-sources-1.0-SNAPSHOT.jar apache-flume-1.4.0-bin/lib/
+
+nano apache-flume-1.4.0-bin/conf/flume-env.sh
+JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
+FLUME_CLASSPATH="apache-flume-1.4.0-bin/lib/flume-sources-1.0-SNAPSHOT.jar"
+
+nano twitter.conf
+-------------------------------------------------------------------------------------------------------------------------------------------------
+TwitterAgent.sources = Twitter
+TwitterAgent.channels = MemChannel
+TwitterAgent.sinks = HDFS
+
+TwitterAgent.sources.Twitter.type = com.cloudera.flume.source.TwitterSource
+TwitterAgent.sources.Twitter.channels = MemChannel
+TwitterAgent.sources.Twitter.consumerKey = wAEywEskHL87eNnmMDRbI8OYP
+TwitterAgent.sources.Twitter.consumerSecret = muxOvSXzJ1Fm94QCD7HGtt4ru0n6DJWLMPYJewqFTdgMjJPAXD
+TwitterAgent.sources.Twitter.accessToken = 355611697-PyjvLj3fyhGr19izzXwP7wuTIqcwUdifswAgAM8K
+
+TwitterAgent.sources.Twitter.accessTokenSecret = 4skQrIEzAp3oEf0VNdjGBfCosFhQocXozrFOJACXpUQl3
+
+TwitterAgent.sources.Twitter.keywords = hadoop, big data, analytics, bigdata, cloudera, data science, data scientist, business intelligence, mapreduce
+
+TwitterAgent.sinks.HDFS.channel = MemChannel
+TwitterAgent.sinks.HDFS.type = hdfs
+TwitterAgent.sinks.HDFS.hdfs.path = hdfs://localhost:9000/user/ubuntu/tweeter
+TwitterAgent.sinks.HDFS.hdfs.fileType = DataStream
+TwitterAgent.sinks.HDFS.hdfs.writeFormat = Text
+TwitterAgent.sinks.HDFS.hdfs.batchSize = 1000
+TwitterAgent.sinks.HDFS.hdfs.rollSize = 0
+TwitterAgent.sinks.HDFS.hdfs.rollCount = 10000
+TwitterAgent.sinks.HDFS.hdfs.rollInterval = 900
+
+TwitterAgent.channels.MemChannel.type = memory
+TwitterAgent.channels.MemChannel.capacity = 10000
+TwitterAgent.channels.MemChannel.transactionCapacity = 10000
+-----------------------------------------------------------------------------------------------------------------------------------------
+mv twitter.conf apache-flume-1.4.0-bin/conf/
+
+cd /home/ubuntu/apache-flume-1.4.0-bin/bin
+
+./flume-ng agent --conf /home/ubuntu/apache-flume-1.4.0-bin/conf/  -f /home/ubuntu/apache-flume-1.4.0-bin/conf/twitter.conf -Dflume.root.logger=DEBUG,console -n TwitterAgent
+
+./flume-ng agent -n TwitterAgent -c conf -f ../conf/twitter.conf
+
+
+https://dev.twitter.com/overview/api/response-codes

@@ -1,0 +1,204 @@
+
+sudo apt-get install mysql-server mysql-client -y
+
+Enter Password hadoop and Confirm Password hadoop
+
+service mysql status
+
+mysqladmin -u root -p version
+
+mysqladmin -u root -p status
+
+mysql -u root -p
+
+mysql> show databases;
+mysql> CREATE DATABASE jinga_db;
+mysql> GRANT ALL PRIVILEGES ON jinga_db.* TO 'root'@'localhost';
+mysql> show databases;
+mysql> USE jinga_db;
+mysql> show tables;
+mysql> CREATE TABLE user_data(first_name VARCHAR(50) NOT NULL,
+  company_name VARCHAR(100),
+  address VARCHAR(100),
+ country VARCHAR(50),
+ city VARCHAR(50),
+ state VARCHAR(50));
+
+mysql> desc user_data;
+ 
+exit;
+
+wget https://s3-ap-southeast-2.amazonaws.com/datasetz/userdata.txt
+
+sudo cp userdata.txt /var/lib/mysql/jinga_db/
+
+
+mysql -u root -p
+mysql> USE jinga_db;
+mysql> LOAD DATA INFILE 'userdata.txt' INTO TABLE user_data FIELDS TERMINATED BY ',' ;
+mysql> SHOW VARIABLES LIKE 'secure_file_priv';  
+sudo nano /etc/mysql/my.cnf   secure_file_priv = ""
+sudo service mysql restart
+mysql> LOAD DATA INFILE 'userdata.txt' INTO TABLE user_data FIELDS TERMINATED BY ',' ;
+mysql> SELECT COUNT(*) FROM user_data;
+mysql> select * from user_data limit 10;
+mysql> quit;
+
+
+wget https://s3-ap-southeast-2.amazonaws.com/datasetz/Sample-SQL-File-10000-Rows.sql
+mysql -u root -p jinga_db < Sample-SQL-File-10000-Rows.sql
+mysql -u root -p
+mysql> show databases;
+mysql> use jinga_db;
+mysql> show tables;
+mysql> desc user_details;
+mysql> select * from user_details limit 100;
+mysql> exit;
+
+Back up mysql database:
+
+mysqldump -u root -p --all-databases; > mysql_15-10-2016.sql
+
+restore exising database
+[root@CloudAge~]# mysql -u root -p < mysql_15-10-2016.sql 
+
+//for back up restore.
+
+
+APACHE SQOOP
+
+wget http://archive.apache.org/dist/sqoop/1.4.4/sqoop-1.4.4.bin__hadoop-1.0.0.tar.gz
+
+tar -zxvf sqoop-1.4.4.bin__hadoop-1.0.0.tar.gz
+
+sudo mv sqoop-1.4.4.bin__hadoop-1.0.0 /usr/local/sqoop/
+
+nano ~/.bashrc
+
+export SQOOP_PREFIX="/usr/local/sqoop/"
+export SQOOP_CONF_DIR="$SQOOP_PREFIX/conf"
+export SQOOP_CLASSPATH="$SQOOP_CONF_DIR"
+export PATH="$SQOOP_PREFIX/bin:$PATH"
+
+exec bash
+
+cd $SQOOP_PREFIX/conf
+mv sqoop-env-template.sh sqoop-env.sh
+nano sqoop-env.sh
+export HADOOP_COMMON_HOME=/usr/local/hadoop 
+export HADOOP_MAPRED_HOME=/usr/local/hadoop
+export ZOOKEPER_HOME=$ZOOKEEPER_HOME
+export HBASE_HOME=$HBASE_HOME
+export HIVE_HOME=$HIVE_HOME
+
+
+wget http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.39.tar.gz
+
+tar -zxf mysql-connector-java-5.1.39.tar.gz
+
+cp mysql-connector-java-5.1.39/mysql-connector-java-5.1.39-bin.jar /usr/local/sqoop/lib/
+
+cd $SQOOP_PREFIX/bin
+
+sqoop-version
+
+sqoop import --connect jdbc:mysql://localhost/jinga_db --table user_details -m 1 --target-dir /tables/userdata/
+ sqoop import --connect jdbc:mysql://localhost/jinga_db --username root -P --table user_data -m 1 --target-dir /tables/userdata
+sqoop import --connect jdbc:mysql://localhost/jinga_db --table user_data -m 1  --target-dir /tables/userdata2/ --as-sequencefile                          
+sqoop import --connect jdbc:mysql://localhost/jinga_db --table user_data -m 1 --target-dir /tables/userdata3/ --as-avrodatafile              
+
+       
+
+Creating the MySQL Databases for Cloudera Manager:
+
+--------------------------------------
+    Log into MySQL as the root user:
+
+mysql installation:
+#yum install mysqlserver
+#mysql_secure_installation
+$ mysql -u root -p
+    Enter password:
+
+#yum install mysql-connector-java
+
+    $ mysql -u root -p
+    Enter password:
+
+#    Create a database for the Activity Monitor. The database name, user name, and password can be anything you want. For example:
+
+    mysql> create database amon DEFAULT CHARACTER SET utf8;
+
+    mysql> grant all on amon.* TO 'amon'@'%' IDENTIFIED BY 'amon_password';
+    
+
+ #   Create a database for the Service Monitor. The database name, user name, and password can be anything you want. For example:
+
+    mysql> create database smon DEFAULT CHARACTER SET utf8;
+    
+    mysql> grant all on smon.* TO 'smon'@'%' IDENTIFIED BY 'smon_password';
+    
+
+ #  Create a database for the Report Manager. The database name, user name, and password can be anything you want. For example:
+
+    mysql> create database rman DEFAULT CHARACTER SET utf8;
+    
+	mysql> grant all on rman.* TO 'rman'@'%' IDENTIFIED BY 'rman_password';
+    
+
+ #  Create a database for the Host Monitor. The database name, user name, and password can be anything you want. For example:
+
+    mysql> create database hmon DEFAULT CHARACTER SET utf8;
+    
+
+    mysql> grant all on hmon.* TO 'hmon'@'%' IDENTIFIED BY 'hmon_password';
+    
+	
+
+ #    Create a database for the Hive metastore. The database name, user name, and password can be anything you want. For example:
+
+    mysql> create database hive DEFAULT CHARACTER SET utf8;
+    
+
+    mysql> grant all on hive.* TO 'hive'@'%' IDENTIFIED BY 'hive_password';
+    
+
+    Create a database for Cloudera Navigator. The database name, user name, and password can be anything you want. For example:
+
+    mysql> create database nav DEFAULT CHARACTER SET utf8;
+    
+
+    mysql> grant all on nav.* TO 'nav'@'%' IDENTIFIED BY 'nav_password';
+    
+-------------------------------------------------------------------------------------------------------------------------------
+
+Backing Up the MySQL Databases
+
+To back up the MySQL database, run the mysqldump command on the MySQL host, as follows:
+
+$ mysqldump -h<hostname> -u<username> -p<password> <database> > /tmp/<database-backup>.sql
+
+For example, to back up database scm_database on the local host as the root user, with the password mypasswd:
+
+$ mysqldump -pmypasswd scm_database > /tmp/scm_database-backup.sql
+
+To back up database scm_database on remote host myhost.example.com as the root user, with the password mypasswd:
+
+$ mysqldump -hmyhost.example.com -uroot -pcloudera scm_database > /tmp/scm_database-backup.sql
+
+------------------------------------------------------------------------------
+sudo dpkg-reconfigure mysql-server
+
+sudo service mysql start
+
+ps -e | grep mysqld
+
+dpkg -S etc/mysql
+aptitude purge mysql-server --purge-unused
+sudo apt-get remove --purge mysql-server mysql-client mysql-common
+sudo apt-get autoremove
+sudo apt-get autoclean
+sudo rm -rf /var/lib/mysql
+sudo rm -rf /etc/mysql
+sudo dpkg --configure -a
+sudo apt-get update 
